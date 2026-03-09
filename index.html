@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sebastian &amp; Hui Xin – Wedding Invitation</title>
+
+  <!-- Elegant serif + light sans-serif from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =====================================================
+       Base & Background
+    ===================================================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blush:    #f9d5e5;
+      --rose:     #e8a0b4;
+      --lavender: #dcc6e0;
+      --lilac:    #c9a9d3;
+      --cream:    #fff8f0;
+      --sage:     #cce0c8;
+      --gold:     #c9a96e;
+      --dark:     #5c3d4a;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 20% 20%, #fce8f0 0%, #f5e6ff 40%, #fdeaf2 70%, #f0f8ff 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Lato', sans-serif;
+      overflow: hidden;
+    }
+
+    /* =====================================================
+       Decorative floating petals (background)
+    ===================================================== */
+    .petals { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .petal {
+      position: absolute;
+      border-radius: 50% 50% 50% 0;
+      opacity: 0.35;
+      animation: drift linear infinite;
+    }
+    @keyframes drift {
+      0%   { transform: translateY(-60px) rotate(0deg); opacity: 0; }
+      10%  { opacity: 0.35; }
+      90%  { opacity: 0.35; }
+      100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* =====================================================
+       Scene & perspective
+    ===================================================== */
+    .scene {
+      position: relative;
+      z-index: 1;
+      perspective: 1400px;
+      width: min(420px, 92vw);
+    }
+
+    /* =====================================================
+       Card wrapper — holds inner content revealed behind doors
+    ===================================================== */
+    .card-wrapper {
+      position: relative;
+      width: 100%;
+      /* ratio roughly A5 portrait */
+      padding-top: 130%;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* =====================================================
+       Inner card (the revealed invitation text)
+    ===================================================== */
+    .card-inner {
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      background: var(--cream);
+      border: 2px solid var(--rose);
+      box-shadow: 0 12px 50px rgba(200, 120, 150, 0.22), 0 4px 16px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 36px 28px 28px;
+      gap: 18px;
+      overflow: hidden;
+    }
+
+    /* SVG floral corner decorations inside card */
+    .floral-corner {
+      position: absolute;
+      width: 110px;
+      height: 110px;
+      opacity: 0.45;
+    }
+    .floral-corner.tl { top: -4px;  left: -4px;  transform: rotate(0deg); }
+    .floral-corner.tr { top: -4px;  right: -4px; transform: rotate(90deg); }
+    .floral-corner.bl { bottom: -4px; left: -4px;  transform: rotate(270deg); }
+    .floral-corner.br { bottom: -4px; right: -4px; transform: rotate(180deg); }
+
+    .monogram {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.3rem, 4vw, 1.7rem);
+      font-weight: 300;
+      letter-spacing: 0.25em;
+      color: var(--lilac);
+      text-transform: uppercase;
+    }
+
+    .divider {
+      width: 60%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--rose), transparent);
+    }
+
+    .invite-heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--dark);
+      text-align: center;
+      line-height: 1.7;
+      letter-spacing: 0.03em;
+    }
+    .invite-heading strong {
+      font-weight: 600;
+      font-style: normal;
+      color: var(--dark);
+    }
+
+    .cta-text {
+      font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+      letter-spacing: 0.12em;
+      color: var(--rose);
+      text-align: center;
+      font-weight: 300;
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.8s ease 0.6s, transform 0.8s ease 0.6s;
+    }
+    .cta-text .arrow {
+      display: inline-block;
+      animation: bounce 1.4s ease-in-out infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(4px); }
+    }
+
+    /* =====================================================
+       The two door panels (front of the envelope/card)
+    ===================================================== */
+    .doors {
+      position: absolute;
+      inset: 0;
+      pointer-events: none; /* card-wrapper handles click */
+    }
+
+    .door {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 50%;
+      background: linear-gradient(160deg, #fde8f0 0%, #f5d5e8 40%, #ead0ee 100%);
+      border: 2px solid var(--rose);
+      overflow: hidden;
+      transition: transform 1.1s cubic-bezier(0.4, 0.0, 0.2, 1),
+                  box-shadow 1.1s ease;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      will-change: transform;
+      z-index: 2;
+    }
+    .door.left {
+      left: 0;
+      border-radius: 18px 0 0 18px;
+      transform-origin: left center;
+      border-right: 1px solid var(--rose);
+    }
+    .door.right {
+      right: 0;
+      border-radius: 0 18px 18px 0;
+      transform-origin: right center;
+      border-left: 1px solid var(--rose);
+    }
+
+    /* Door face content */
+    .door-face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 12px;
+    }
+
+    /* Sealing wax / centre crest visible before opening */
+    .wax-seal {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 68px;
+      height: 68px;
+      background: radial-gradient(circle at 40% 38%, #e8b4c8 0%, #c97fa0 55%, #a85a7a 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      font-style: italic;
+      color: #fff8f5;
+      box-shadow: 0 3px 14px rgba(168, 90, 122, 0.45), inset 0 1px 2px rgba(255,255,255,0.3);
+      z-index: 3;
+      pointer-events: none;
+      /* Notched wax look */
+      clip-path: polygon(
+        50% 0%, 61% 9%, 75% 6%, 78% 20%,
+        92% 25%, 88% 39%, 100% 48%, 92% 58%,
+        95% 72%, 82% 75%, 78% 89%, 64% 85%,
+        55% 96%, 44% 88%, 30% 93%, 25% 79%,
+        11% 77%, 12% 63%, 0% 53%, 9% 42%,
+        5% 28%, 18% 24%, 20% 10%, 35% 13%
+      );
+    }
+
+    /* Door SVG floral */
+    .door-floral {
+      width: 90%;
+      height: auto;
+      opacity: 0.5;
+    }
+
+    .door-hint {
+      position: absolute;
+      bottom: 18px;
+      left: 0; right: 0;
+      text-align: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      color: var(--dark);
+      opacity: 0.6;
+      text-transform: uppercase;
+    }
+
+    /* ===== Open state ===== */
+    .card-wrapper.open .door.left {
+      transform: perspective(1400px) rotateY(-118deg);
+      box-shadow: -12px 0 40px rgba(180, 80, 120, 0.18);
+    }
+    .card-wrapper.open .door.right {
+      transform: perspective(1400px) rotateY(118deg);
+      box-shadow: 12px 0 40px rgba(180, 80, 120, 0.18);
+    }
+    .card-wrapper.open .wax-seal {
+      animation: sealFade 0.3s ease forwards;
+    }
+    @keyframes sealFade {
+      to { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+    }
+    .card-wrapper.open .cta-text {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Ripple on click */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(232, 160, 180, 0.35);
+      transform: scale(0);
+      animation: rippleAnim 0.6s linear forwards;
+      pointer-events: none;
+      z-index: 10;
+    }
+    @keyframes rippleAnim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* =====================================================
+       Redirect overlay (full-screen fade-out before navigating)
+    ===================================================== */
+    .redirect-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--cream);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease;
+    }
+    .redirect-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .redirect-overlay p {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      font-weight: 300;
+      font-style: italic;
+      color: var(--dark);
+      letter-spacing: 0.08em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Floating petals background -->
+<div class="petals" id="petals"></div>
+
+<!-- Main scene -->
+<div class="scene">
+  <div class="card-wrapper" id="card" role="button" aria-label="Open wedding invitation" tabindex="0">
+
+    <!-- Revealed inner content -->
+    <div class="card-inner">
+
+      <!-- Floral SVG corners -->
+      <svg class="floral-corner tl" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g opacity="1">
+          <!-- Stem -->
+          <path d="M10 110 Q40 70 90 15" stroke="#c97fa0" stroke-width="1.5" fill="none"/>
+          <!-- Leaves -->
+          <path d="M30 82 Q18 68 28 58 Q42 72 30 82Z" fill="#a8cc9a" opacity="0.8"/>
+          <path d="M50 60 Q38 46 48 36 Q62 50 50 60Z" fill="#a8cc9a" opacity="0.8"/>
+          <!-- Flowers -->
+          <circle cx="85" cy="20" r="7" fill="#f9a8c4" opacity="0.9"/>
+          <circle cx="85" cy="20" r="4" fill="#fce4ec"/>
+          <circle cx="71" cy="33" r="5.5" fill="#d8a8d8" opacity="0.9"/>
+          <circle cx="71" cy="33" r="3" fill="#f3e5f5"/>
+          <circle cx="56" cy="48" r="5" fill="#f9a8c4" opacity="0.7"/>
+          <circle cx="56" cy="48" r="2.8" fill="#fce4ec"/>
+          <!-- Small petals -->
+          <ellipse cx="85" cy="13" rx="3" ry="5" fill="#f9a8c4" opacity="0.6" transform="rotate(-20 85 13)"/>
+          <ellipse cx="92" cy="19" rx="3" ry="5" fill="#f9a8c4" opacity="0.6" transform="rotate(70 92 19)"/>
+          <ellipse cx="78" cy="19" rx="3" ry="5" fill="#f9a8c4" opacity="0.6" transform="rotate(-70 78 19)"/>
+          <ellipse cx="85" cy="27" rx="3" ry="5" fill="#f9a8c4" opacity="0.6" transform="rotate(160 85 27)"/>
+        </g>
+      </svg>
+
+      <svg class="floral-corner tr" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g opacity="1">
+          <path d="M10 110 Q40 70 90 15" stroke="#c97fa0" stroke-width="1.5" fill="none"/>
+          <path d="M30 82 Q18 68 28 58 Q42 72 30 82Z" fill="#a8cc9a" opacity="0.8"/>
+          <path d="M50 60 Q38 46 48 36 Q62 50 50 60Z" fill="#a8cc9a" opacity="0.8"/>
+          <circle cx="85" cy="20" r="7" fill="#d8a8d8" opacity="0.9"/>
+          <circle cx="85" cy="20" r="4" fill="#f3e5f5"/>
+          <circle cx="71" cy="33" r="5.5" fill="#f9a8c4" opacity="0.9"/>
+          <circle cx="71" cy="33" r="3" fill="#fce4ec"/>
+          <circle cx="56" cy="48" r="5" fill="#d8a8d8" opacity="0.7"/>
+          <circle cx="56" cy="48" r="2.8" fill="#f3e5f5"/>
+          <ellipse cx="85" cy="13" rx="3" ry="5" fill="#d8a8d8" opacity="0.6" transform="rotate(-20 85 13)"/>
+          <ellipse cx="92" cy="19" rx="3" ry="5" fill="#d8a8d8" opacity="0.6" transform="rotate(70 92 19)"/>
+          <ellipse cx="78" cy="19" rx="3" ry="5" fill="#d8a8d8" opacity="0.6" transform="rotate(-70 78 19)"/>
+          <ellipse cx="85" cy="27" rx="3" ry="5" fill="#d8a8d8" opacity="0.6" transform="rotate(160 85 27)"/>
+        </g>
+      </svg>
+
+      <svg class="floral-corner bl" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g opacity="1">
+          <path d="M10 110 Q40 70 90 15" stroke="#c97fa0" stroke-width="1.5" fill="none"/>
+          <path d="M30 82 Q18 68 28 58 Q42 72 30 82Z" fill="#a8cc9a" opacity="0.8"/>
+          <path d="M50 60 Q38 46 48 36 Q62 50 50 60Z" fill="#a8cc9a" opacity="0.8"/>
+          <circle cx="85" cy="20" r="7" fill="#f9a8c4" opacity="0.9"/>
+          <circle cx="85" cy="20" r="4" fill="#fce4ec"/>
+          <circle cx="71" cy="33" r="5.5" fill="#d8a8d8" opacity="0.9"/>
+          <circle cx="71" cy="33" r="3" fill="#f3e5f5"/>
+          <circle cx="56" cy="48" r="5" fill="#f9a8c4" opacity="0.7"/>
+          <circle cx="56" cy="48" r="2.8" fill="#fce4ec"/>
+          <ellipse cx="85" cy="13" rx="3" ry="5" fill="#f9a8c4" opacity="0.6" transform="rotate(-20 85 13)"/>
+          <ellipse cx="92" cy="19" rx="3" ry="5" fill="#f9a8c4" opacity="0.6" transform="rotate(70 92 19)"/>
+          <ellipse cx="78" cy="19" rx="3" ry="5" fill="#f9a8c4" opacity="0.6" transform="rotate(-70 78 19)"/>
+          <ellipse cx="85" cy="27" rx="3" ry="5" fill="#f9a8c4" opacity="0.6" transform="rotate(160 85 27)"/>
+        </g>
+      </svg>
+
+      <svg class="floral-corner br" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g opacity="1">
+          <path d="M10 110 Q40 70 90 15" stroke="#c97fa0" stroke-width="1.5" fill="none"/>
+          <path d="M30 82 Q18 68 28 58 Q42 72 30 82Z" fill="#a8cc9a" opacity="0.8"/>
+          <path d="M50 60 Q38 46 48 36 Q62 50 50 60Z" fill="#a8cc9a" opacity="0.8"/>
+          <circle cx="85" cy="20" r="7" fill="#d8a8d8" opacity="0.9"/>
+          <circle cx="85" cy="20" r="4" fill="#f3e5f5"/>
+          <circle cx="71" cy="33" r="5.5" fill="#f9a8c4" opacity="0.9"/>
+          <circle cx="71" cy="33" r="3" fill="#fce4ec"/>
+          <circle cx="56" cy="48" r="5" fill="#d8a8d8" opacity="0.7"/>
+          <circle cx="56" cy="48" r="2.8" fill="#f3e5f5"/>
+          <ellipse cx="85" cy="13" rx="3" ry="5" fill="#d8a8d8" opacity="0.6" transform="rotate(-20 85 13)"/>
+          <ellipse cx="92" cy="19" rx="3" ry="5" fill="#d8a8d8" opacity="0.6" transform="rotate(70 92 19)"/>
+          <ellipse cx="78" cy="19" rx="3" ry="5" fill="#d8a8d8" opacity="0.6" transform="rotate(-70 78 19)"/>
+          <ellipse cx="85" cy="27" rx="3" ry="5" fill="#d8a8d8" opacity="0.6" transform="rotate(160 85 27)"/>
+        </g>
+      </svg>
+
+      <!-- Invitation text -->
+      <p class="monogram">S &amp; H</p>
+      <div class="divider"></div>
+
+      <p class="invite-heading">
+        Are you free in<br />
+        <strong>October 2026</strong><br />
+        to celebrate the Wedding of<br />
+        <strong>Sebastian</strong> &amp; <strong>Hui&nbsp;Xin?</strong>
+      </p>
+
+      <div class="divider"></div>
+
+      <p class="cta-text">
+        Click to view more &nbsp;<span class="arrow">&#8595;</span>
+      </p>
+    </div><!-- /.card-inner -->
+
+    <!-- Double-door panels (overlay) -->
+    <div class="doors">
+
+      <!-- Left door -->
+      <div class="door left" id="doorLeft">
+        <div class="door-face">
+          <!-- Left half floral SVG -->
+          <svg class="door-floral" viewBox="0 0 200 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Vertical branch -->
+            <path d="M100 490 Q95 380 100 280 Q105 180 95 80" stroke="#c97fa0" stroke-width="2" fill="none"/>
+            <!-- Leaves & flowers along branch -->
+            <path d="M100 400 Q70 380 60 360 Q90 355 100 400Z" fill="#b8d4b0" opacity="0.7"/>
+            <path d="M100 340 Q130 320 140 298 Q115 295 100 340Z" fill="#b8d4b0" opacity="0.7"/>
+            <path d="M100 270 Q68 250 58 228 Q88 225 100 270Z" fill="#b8d4b0" opacity="0.7"/>
+            <path d="M100 200 Q132 182 142 160 Q117 157 100 200Z" fill="#b8d4b0" opacity="0.7"/>
+            <!-- Flower 1 -->
+            <circle cx="95" cy="430" r="12" fill="#f9a8c4" opacity="0.8"/>
+            <circle cx="95" cy="430" r="6"  fill="#fce4ec"/>
+            <ellipse cx="95" cy="418" rx="5" ry="8" fill="#f9a8c4" opacity="0.55"/>
+            <ellipse cx="107" cy="430" rx="5" ry="8" fill="#f9a8c4" opacity="0.55" transform="rotate(90 107 430)"/>
+            <ellipse cx="95" cy="442" rx="5" ry="8" fill="#f9a8c4" opacity="0.55" transform="rotate(180 95 442)"/>
+            <ellipse cx="83"  cy="430" rx="5" ry="8" fill="#f9a8c4" opacity="0.55" transform="rotate(270 83 430)"/>
+            <!-- Flower 2 -->
+            <circle cx="100" cy="300" r="10" fill="#d8a8d8" opacity="0.85"/>
+            <circle cx="100" cy="300" r="5"  fill="#f3e5f5"/>
+            <ellipse cx="100" cy="290" rx="4" ry="7" fill="#d8a8d8" opacity="0.55"/>
+            <ellipse cx="110" cy="300" rx="4" ry="7" fill="#d8a8d8" opacity="0.55" transform="rotate(90 110 300)"/>
+            <ellipse cx="100" cy="310" rx="4" ry="7" fill="#d8a8d8" opacity="0.55" transform="rotate(180 100 310)"/>
+            <ellipse cx="90"  cy="300" rx="4" ry="7" fill="#d8a8d8" opacity="0.55" transform="rotate(270 90 300)"/>
+            <!-- Flower 3 small -->
+            <circle cx="98"  cy="170" r="8"  fill="#f9a8c4" opacity="0.75"/>
+            <circle cx="98"  cy="170" r="4"  fill="#fce4ec"/>
+            <!-- Flower 4 small -->
+            <circle cx="100" cy="95"  r="9"  fill="#d8a8d8" opacity="0.8"/>
+            <circle cx="100" cy="95"  r="4.5" fill="#f3e5f5"/>
+            <!-- Small buds -->
+            <ellipse cx="75"  cy="370" rx="4" ry="6" fill="#f9a8c4" opacity="0.5" transform="rotate(-30 75 370)"/>
+            <ellipse cx="120" cy="220" rx="4" ry="6" fill="#d8a8d8" opacity="0.5" transform="rotate(30 120 220)"/>
+            <ellipse cx="72"  cy="135" rx="3" ry="5" fill="#f9a8c4" opacity="0.45" transform="rotate(-20 72 135)"/>
+          </svg>
+        </div>
+        <p class="door-hint">Open me</p>
+      </div>
+
+      <!-- Right door (mirror) -->
+      <div class="door right" id="doorRight">
+        <div class="door-face">
+          <svg class="door-floral" viewBox="0 0 200 500" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform:scaleX(-1);">
+            <path d="M100 490 Q95 380 100 280 Q105 180 95 80" stroke="#c97fa0" stroke-width="2" fill="none"/>
+            <path d="M100 400 Q70 380 60 360 Q90 355 100 400Z" fill="#b8d4b0" opacity="0.7"/>
+            <path d="M100 340 Q130 320 140 298 Q115 295 100 340Z" fill="#b8d4b0" opacity="0.7"/>
+            <path d="M100 270 Q68 250 58 228 Q88 225 100 270Z" fill="#b8d4b0" opacity="0.7"/>
+            <path d="M100 200 Q132 182 142 160 Q117 157 100 200Z" fill="#b8d4b0" opacity="0.7"/>
+            <circle cx="95" cy="430" r="12" fill="#d8a8d8" opacity="0.8"/>
+            <circle cx="95" cy="430" r="6"  fill="#f3e5f5"/>
+            <ellipse cx="95" cy="418" rx="5" ry="8" fill="#d8a8d8" opacity="0.55"/>
+            <ellipse cx="107" cy="430" rx="5" ry="8" fill="#d8a8d8" opacity="0.55" transform="rotate(90 107 430)"/>
+            <ellipse cx="95" cy="442" rx="5" ry="8" fill="#d8a8d8" opacity="0.55" transform="rotate(180 95 442)"/>
+            <ellipse cx="83"  cy="430" rx="5" ry="8" fill="#d8a8d8" opacity="0.55" transform="rotate(270 83 430)"/>
+            <circle cx="100" cy="300" r="10" fill="#f9a8c4" opacity="0.85"/>
+            <circle cx="100" cy="300" r="5"  fill="#fce4ec"/>
+            <ellipse cx="100" cy="290" rx="4" ry="7" fill="#f9a8c4" opacity="0.55"/>
+            <ellipse cx="110" cy="300" rx="4" ry="7" fill="#f9a8c4" opacity="0.55" transform="rotate(90 110 300)"/>
+            <ellipse cx="100" cy="310" rx="4" ry="7" fill="#f9a8c4" opacity="0.55" transform="rotate(180 100 310)"/>
+            <ellipse cx="90"  cy="300" rx="4" ry="7" fill="#f9a8c4" opacity="0.55" transform="rotate(270 90 300)"/>
+            <circle cx="98"  cy="170" r="8"  fill="#d8a8d8" opacity="0.75"/>
+            <circle cx="98"  cy="170" r="4"  fill="#f3e5f5"/>
+            <circle cx="100" cy="95"  r="9"  fill="#f9a8c4" opacity="0.8"/>
+            <circle cx="100" cy="95"  r="4.5" fill="#fce4ec"/>
+            <ellipse cx="75"  cy="370" rx="4" ry="6" fill="#d8a8d8" opacity="0.5" transform="rotate(-30 75 370)"/>
+            <ellipse cx="120" cy="220" rx="4" ry="6" fill="#f9a8c4" opacity="0.5" transform="rotate(30 120 220)"/>
+            <ellipse cx="72"  cy="135" rx="3" ry="5" fill="#d8a8d8" opacity="0.45" transform="rotate(-20 72 135)"/>
+          </svg>
+        </div>
+        <p class="door-hint">Open me</p>
+      </div>
+
+      <!-- Wax seal sits between the two doors -->
+      <div class="wax-seal">S&amp;H</div>
+    </div><!-- /.doors -->
+
+  </div><!-- /.card-wrapper -->
+</div><!-- /.scene -->
+
+<!-- Redirect overlay -->
+<div class="redirect-overlay" id="overlay">
+  <p>Taking you to the invitation&hellip;</p>
+</div>
+
+<script>
+  /* ============================================================
+     Configuration — replace WEDDING_URL with the actual page
+  ============================================================ */
+  const WEDDING_URL = 'https://example.com/wedding-details'; // ← update this URL
+
+  /* ============================================================
+     Floating petals
+  ============================================================ */
+  (function spawnPetals() {
+    const container = document.getElementById('petals');
+    const colours = ['#f9d5e5','#dcc6e0','#cce0c8','#fde8d8','#e8d5f0'];
+    const sizes   = [8, 10, 12, 14, 7, 9];
+
+    for (let i = 0; i < 28; i++) {
+      const el = document.createElement('div');
+      el.classList.add('petal');
+      const size = sizes[Math.floor(Math.random() * sizes.length)];
+      el.style.cssText = [
+        `width:${size}px`,
+        `height:${size * 1.2}px`,
+        `left:${Math.random() * 100}%`,
+        `background:${colours[Math.floor(Math.random() * colours.length)]}`,
+        `animation-duration:${8 + Math.random() * 14}s`,
+        `animation-delay:${-Math.random() * 20}s`,
+        `border-radius:${40 + Math.random() * 30}% ${60 - Math.random() * 20}% ${50 + Math.random() * 20}% ${30 + Math.random() * 20}%`
+      ].join(';');
+      container.appendChild(el);
+    }
+  }());
+
+  /* ============================================================
+     Door-opening interaction
+  ============================================================ */
+  const card    = document.getElementById('card');
+  const overlay = document.getElementById('overlay');
+  let opened    = false;
+
+  function triggerRipple(e) {
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX || rect.left + rect.width  / 2) - rect.left;
+    const y = (e.clientY || rect.top  + rect.height / 2) - rect.top;
+    const ripple = document.createElement('div');
+    ripple.classList.add('ripple');
+    const size = Math.max(rect.width, rect.height) * 0.6;
+    ripple.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${x - size / 2}px; top:${y - size / 2}px;
+    `;
+    card.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+  }
+
+  function openCard(e) {
+    if (opened) return;
+    opened = true;
+
+    triggerRipple(e);
+
+    // Add open class — CSS handles the 3-D door swing
+    card.classList.add('open');
+
+    // After doors finish opening, fade to white then navigate
+    setTimeout(() => {
+      overlay.classList.add('active');
+      setTimeout(() => {
+        window.location.href = WEDDING_URL;
+      }, 900);
+    }, 1800);
+  }
+
+  card.addEventListener('click', openCard);
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCard(e); }
+  });
+</script>
+</body>
+</html>
