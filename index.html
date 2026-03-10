@@ -5,15 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sebastian &amp; Hui Xin – Wedding Invitation</title>
 
-  <!-- Elegant serif + light sans-serif from Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
 
   <style>
-    /* =====================================================
-       Base & Background
-    ===================================================== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -30,6 +26,21 @@
       --wax-lite: #b4425b;
       --leaf:     #7ea87a;
       --ink:      #b66b86;
+
+      /* Envelope geometry — flap height × clip tip-y = seal position
+         flap-height(47%) × clip-tip-y(87%) = 40.89% ≈ 40.9% */
+      --flap-height:  47%;
+      --seal-top:     40.9%;
+
+      /* Animation sequence timings */
+      --t-seal-fade:  0.28s;   /* seal crumbles */
+      --t-flap-delay: 0.26s;   /* flap starts after seal */
+      --t-flap-dur:   0.94s;   /* flap rotation duration */
+      --t-env-delay:  1.05s;   /* envelope fade starts */
+      --t-env-dur:    0.55s;   /* envelope fade duration */
+      --t-card-delay: 1.5s;    /* invite card appears */
+      --t-cta-delay:  2.2s;    /* cta text appears */
+      --t-btn-delay:  2.4s;    /* rsvp button appears */
     }
 
     body {
@@ -43,20 +54,28 @@
     }
 
     /* =====================================================
-       Decorative floating petals (background)
+       Bubbles (background animation)
     ===================================================== */
-    .petals { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-    .petal {
+    .bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .bubble {
       position: absolute;
-      border-radius: 50% 50% 50% 0;
-      opacity: 0.35;
-      animation: drift linear infinite;
+      bottom: -80px;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle at 35% 30%,
+        rgba(255,255,255,0.82) 0%,
+        rgba(255,210,235,0.20) 55%,
+        transparent 100%
+      );
+      border: 1.2px solid rgba(255,255,255,0.62);
+      animation: bubbleRise linear infinite;
     }
-    @keyframes drift {
-      0%   { transform: translateY(-60px) rotate(0deg); opacity: 0; }
-      10%  { opacity: 0.35; }
-      90%  { opacity: 0.35; }
-      100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+    @keyframes bubbleRise {
+      0%   { transform: translateY(0)       translateX(0);             opacity: 0;  }
+      8%   { opacity: 0.82; }
+      50%  { transform: translateY(-50vh)    translateX(var(--drift));  }
+      92%  { opacity: 0.55; }
+      100% { transform: translateY(-115vh)   translateX(var(--drift2)); opacity: 0; }
     }
 
     /* =====================================================
@@ -66,63 +85,60 @@
       position: relative;
       z-index: 1;
       perspective: 1400px;
-      width: min(420px, 92vw);
+      width: min(380px, 92vw);
     }
 
     /* =====================================================
-       Card wrapper — holds inner content revealed behind doors
+       Card wrapper
     ===================================================== */
     .card-wrapper {
       position: relative;
       width: 100%;
-      /* ratio roughly A5 portrait */
-      padding-top: 130%;
+      padding-top: 140%;
       cursor: pointer;
       user-select: none;
     }
 
     /* =====================================================
-       Inner card (the revealed invitation text)
+       Inner invite card (revealed after envelope opens)
     ===================================================== */
     .card-inner {
       position: absolute;
       inset: 0;
-      border-radius: 18px;
-      /*
-        PHOTO BACKGROUND: Replace 'couple.jpg' with the path to your couple photo.
-        The semi-transparent cream overlay keeps text readable over any photo.
-        If the photo is not found, the soft cream colour shows as a fallback.
-      */
+      border-radius: 14px;
       background:
-        linear-gradient(rgba(255,248,240,0.84), rgba(255,248,240,0.84)),
+        linear-gradient(rgba(255,248,240,0.88), rgba(255,248,240,0.88)),
         url('couple.jpg') center / cover no-repeat,
         var(--cream);
       border: 2px solid var(--rose);
-      box-shadow: 0 12px 50px rgba(200, 120, 150, 0.22), 0 4px 16px rgba(0,0,0,0.08);
+      box-shadow: 0 12px 50px rgba(200,120,150,0.22), 0 4px 16px rgba(0,0,0,0.08);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 36px 28px 28px;
-      gap: 18px;
+      gap: 16px;
       overflow: hidden;
+      z-index: 1;
+      opacity: 0;
+      transform: translateY(18px) scale(0.98);
+      transition: opacity 0.8s ease var(--t-card-delay), transform 0.8s ease var(--t-card-delay);
+    }
+    .card-wrapper.open .card-inner {
+      opacity: 1;
+      transform: none;
     }
 
-    /* SVG floral corner decorations inside card */
     .floral-corner {
       position: absolute;
-      width: 130px;
-      height: 130px;
+      width: 125px;
+      height: 125px;
       opacity: 0.82;
     }
-    .floral-corner.tl { top: -10px;  left: -10px;  transform: rotate(0deg); }
-    .floral-corner.tr { top: -10px;  right: -10px; transform: rotate(90deg); }
-    .floral-corner.bl { bottom: -10px; left: -10px;  transform: rotate(270deg); }
-    .floral-corner.br { bottom: -10px; right: -10px; transform: rotate(180deg); }
-
-    .rose-outline * {
-      vector-effect: non-scaling-stroke;
-    }
+    .floral-corner.tl { top: -8px;   left: -8px;  transform: rotate(0deg); }
+    .floral-corner.tr { top: -8px;   right: -8px; transform: rotate(90deg); }
+    .floral-corner.bl { bottom: -8px; left: -8px;  transform: rotate(270deg); }
+    .floral-corner.br { bottom: -8px; right: -8px; transform: rotate(180deg); }
 
     .monogram {
       font-family: 'Cormorant Garamond', serif;
@@ -164,90 +180,120 @@
       text-transform: uppercase;
       opacity: 0;
       transform: translateY(10px);
-      transition: opacity 0.8s ease 0.6s, transform 0.8s ease 0.6s;
+      transition: opacity 0.8s ease var(--t-cta-delay), transform 0.8s ease var(--t-cta-delay);
     }
-    .cta-text .arrow {
-      display: inline-block;
-      animation: bounce 1.4s ease-in-out infinite;
+    .card-wrapper.open .cta-text {
+      opacity: 1;
+      transform: translateY(0);
     }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50%       { transform: translateY(4px); }
+
+    .rsvp-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--wax-mid), var(--wax-deep));
+      color: rgba(255,248,245,0.96);
+      padding: 10px 26px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(0.85rem, 2.8vw, 1rem);
+      font-weight: 400;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      box-shadow: 0 6px 18px rgba(111,22,50,0.32);
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.8s ease var(--t-btn-delay), transform 0.8s ease var(--t-btn-delay),
+                  background 0.3s ease, box-shadow 0.3s ease;
+      pointer-events: none;
+    }
+    .rsvp-btn svg { flex-shrink: 0; }
+    .rsvp-btn:hover {
+      background: linear-gradient(135deg, var(--wax-lite), var(--wax-mid));
+      box-shadow: 0 8px 22px rgba(111,22,50,0.44);
+    }
+    .card-wrapper.open .rsvp-btn {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
 
     /* =====================================================
-       The two door panels (front of the envelope/card)
+       ENVELOPE (overlays the invite card before opening)
     ===================================================== */
-    .doors {
+    .envelope {
       position: absolute;
       inset: 0;
-      pointer-events: none; /* card-wrapper handles click */
-    }
-
-    .door {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 50%;
-      background: linear-gradient(160deg, #fde8f0 0%, #f5d5e8 40%, #ead0ee 100%);
-      border: 2px solid var(--rose);
-      overflow: hidden;
-      transition: transform 1.1s cubic-bezier(0.4, 0.0, 0.2, 1),
-                  box-shadow 1.1s ease;
-      transform-style: preserve-3d;
-      backface-visibility: hidden;
-      will-change: transform;
       z-index: 2;
+      pointer-events: none;
+      border-radius: 14px;
+      transition: opacity var(--t-env-dur) ease var(--t-env-delay), transform var(--t-env-dur) ease var(--t-env-delay);
     }
-    .door.left {
-      left: 0;
-      border-radius: 18px 0 0 18px;
-      transform-origin: left center;
-      border-right: 1px solid var(--rose);
-    }
-    .door.right {
-      right: 0;
-      border-radius: 0 18px 18px 0;
-      transform-origin: right center;
-      border-left: 1px solid var(--rose);
+    .card-wrapper.open .envelope {
+      opacity: 0;
+      transform: translateY(22px) scale(0.95);
     }
 
-    /* Door face content */
-    .door-face {
+    /* Envelope body */
+    .env-body {
       position: absolute;
       inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px 12px;
+      border-radius: 14px;
+      background: linear-gradient(168deg, #fde8f4 0%, #f8eef8 38%, #fde2f2 68%, #f8f0e8 100%);
+      border: 2px solid var(--rose);
+      box-shadow: 0 14px 45px rgba(200,120,150,0.20), 0 4px 14px rgba(0,0,0,0.07);
+      overflow: hidden;
     }
 
-    /* Sealing wax / centre crest visible before opening */
+    .env-fold-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Envelope flap (downward triangle, folds open from the top) */
+    .env-flap {
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      right: -1px;
+      height: var(--flap-height);
+      clip-path: polygon(0 0, 100% 0, 50% 87%);
+      background: linear-gradient(178deg, #fcd8ee 0%, #f0cce6 52%, #e8c8ee 100%);
+      border-top: 2px solid var(--rose);
+      transform-origin: 50% 0%;
+      transform-style: preserve-3d;
+      transition: transform var(--t-flap-dur) cubic-bezier(0.4, 0, 0.2, 1) var(--t-flap-delay);
+      z-index: 3;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 7px rgba(180,80,120,0.14));
+    }
+    .card-wrapper.open .env-flap {
+      transform: perspective(1400px) rotateX(-172deg);
+    }
+
+    /* Wax seal — tip of flap  (--flap-height × clip-tip-y(87%) = --seal-top) */
     .wax-seal {
       position: absolute;
       left: 50%;
-      top: 50%;
+      top: var(--seal-top);
       transform: translate(-50%, -50%);
-      width: 86px;
-      height: 86px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      z-index: 3;
+      z-index: 4;
       pointer-events: none;
-
-      /* Deep red classic wax look */
       background:
         radial-gradient(circle at 30% 26%, rgba(255,255,255,0.38) 0 16%, transparent 17% 100%),
         radial-gradient(circle at 68% 72%, rgba(0,0,0,0.28) 0 32%, transparent 58% 100%),
         radial-gradient(circle at 42% 36%, var(--wax-lite) 0%, var(--wax-mid) 38%, var(--wax-deep) 100%);
-
       box-shadow:
-        0 12px 22px rgba(60, 8, 24, 0.42),
+        0 10px 22px rgba(60,8,24,0.44),
         0 3px 0 rgba(255,255,255,0.14) inset;
-
       filter: drop-shadow(0 3px 2px rgba(0,0,0,0.20));
-
-      /* Classic wax stamp shape — 12 evenly-spaced lobes */
       clip-path: polygon(
         50% 0%,   56% 5%,  63% 2%,  67% 8%,  74% 6%,
         77% 13%,  84% 12%, 86% 19%, 93% 19%, 94% 27%,
@@ -260,13 +306,10 @@
         6% 27%,  7% 19%,  14% 19%, 16% 12%, 23% 13%,
         26% 6%,  33% 8%,  37% 2%,  44% 5%
       );
-
       display: grid;
       place-items: center;
       overflow: visible;
     }
-
-    /* subtle pressed wax texture */
     .wax-seal::before {
       content: "";
       position: absolute;
@@ -283,60 +326,64 @@
       mix-blend-mode: overlay;
       border-radius: 50%;
     }
-
-    /* The SVG stamp impression sits on top of the wax */
     .wax-seal .seal-svg {
       position: relative;
-      width: 80px;
-      height: 80px;
+      width: 76px;
+      height: 76px;
       z-index: 1;
     }
-
-    /* Door SVG floral */
-    .door-floral {
-      width: 90%;
-      height: auto;
-      opacity: 0.5;
+    .card-wrapper.open .wax-seal {
+      animation: sealFade var(--t-seal-fade) ease forwards;
+    }
+    @keyframes sealFade {
+      to { opacity: 0; transform: translate(-50%, -50%) scale(0.55); }
     }
 
-    .door-hint {
+    /* Postage stamp */
+    .env-stamp {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 52px;
+      height: 66px;
+      z-index: 5;
+      filter: drop-shadow(0 2px 5px rgba(100,50,70,0.22));
+    }
+
+    /* Corner flowers on the envelope */
+    .env-flower {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0.76;
+    }
+    .env-flower.tl { top: -6px;   left: -6px; }
+    .env-flower.tr { top: -6px;   right: -6px;  transform: scaleX(-1); }
+    .env-flower.bl { bottom: -6px; left: -6px;  transform: scaleY(-1); }
+    .env-flower.br { bottom: -6px; right: -6px; transform: scale(-1, -1); }
+
+    .env-hint {
       position: absolute;
       bottom: 18px;
       left: 0; right: 0;
       text-align: center;
       font-family: 'Cormorant Garamond', serif;
-      font-size: 0.75rem;
-      letter-spacing: 0.15em;
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
       color: var(--dark);
-      opacity: 0.6;
+      opacity: 0.52;
       text-transform: uppercase;
-    }
-
-    /* ===== Open state ===== */
-    .card-wrapper.open .door.left {
-      transform: perspective(1400px) rotateY(-118deg);
-      box-shadow: -12px 0 40px rgba(180, 80, 120, 0.18);
-    }
-    .card-wrapper.open .door.right {
-      transform: perspective(1400px) rotateY(118deg);
-      box-shadow: 12px 0 40px rgba(180, 80, 120, 0.18);
-    }
-    .card-wrapper.open .wax-seal {
-      animation: sealFade 0.3s ease forwards;
-    }
-    @keyframes sealFade {
-      to { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
-    }
-    .card-wrapper.open .cta-text {
-      opacity: 1;
-      transform: translateY(0);
+      z-index: 6;
+      pointer-events: none;
     }
 
     /* Ripple on click */
     .ripple {
       position: absolute;
       border-radius: 50%;
-      background: rgba(232, 160, 180, 0.35);
+      background: rgba(232,160,180,0.35);
       transform: scale(0);
       animation: rippleAnim 0.6s linear forwards;
       pointer-events: none;
@@ -345,73 +392,28 @@
     @keyframes rippleAnim {
       to { transform: scale(4); opacity: 0; }
     }
-
-    /* =====================================================
-       RSVP button (shown after card opens)
-    ===================================================== */
-    .rsvp-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: linear-gradient(135deg, var(--wax-mid), var(--wax-deep));
-      color: rgba(255,248,245,0.96);
-      padding: 10px 26px;
-      border-radius: 30px;
-      text-decoration: none;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(0.85rem, 2.8vw, 1rem);
-      font-weight: 400;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      box-shadow: 0 6px 18px rgba(111, 22, 50, 0.32);
-      opacity: 0;
-      transform: translateY(14px);
-      transition: opacity 0.8s ease 1.0s, transform 0.8s ease 1.0s,
-                  background 0.3s ease, box-shadow 0.3s ease;
-      pointer-events: none;
-    }
-    .rsvp-btn svg { flex-shrink: 0; }
-    .rsvp-btn:hover {
-      background: linear-gradient(135deg, var(--wax-lite), var(--wax-mid));
-      box-shadow: 0 8px 22px rgba(111, 22, 50, 0.44);
-    }
-    .card-wrapper.open .rsvp-btn {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
   </style>
 </head>
 <body>
 
-<!-- Floating petals background -->
-<div class="petals" id="petals"></div>
+<div class="bubbles" id="bubbles"></div>
 
-<!-- Main scene -->
 <div class="scene">
   <div class="card-wrapper" id="card" role="button" aria-label="Open wedding invitation" tabindex="0">
 
-    <!-- Revealed inner content -->
+    <!-- ── INVITE CARD (revealed after opening) ── -->
     <div class="card-inner">
 
-
-      <!-- Rose SVG corners — filled roses with leaves -->
       <svg class="floral-corner tl" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- Curved stem -->
         <path d="M10 132 C28 112 48 92 68 70 C88 48 110 30 132 10" stroke="#c87c96" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-        <!-- Leaf 1 lower-left (left of stem) -->
         <path d="M30 112 C14 100 12 84 22 76 C36 82 38 102 30 112Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
         <path d="M30 112 C22 96 20 84 22 76" stroke="#4a6f47" stroke-width="0.9" fill="none" opacity="0.65"/>
-        <!-- Leaf 2 lower-left (right of stem) -->
         <path d="M44 94 C60 86 62 68 52 62 C40 68 40 84 44 94Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
         <path d="M44 94 C50 80 52 70 52 62" stroke="#4a6f47" stroke-width="0.9" fill="none" opacity="0.65"/>
-        <!-- Leaf 3 upper-right (right of stem) -->
         <path d="M96 46 C112 34 128 34 130 46 C118 56 100 54 96 46Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
         <path d="M96 46 C112 44 124 44 130 46" stroke="#4a6f47" stroke-width="0.9" fill="none" opacity="0.65"/>
-        <!-- Leaf 4 mid (left of stem) -->
         <path d="M68 70 C54 60 50 46 60 40 C72 44 74 62 68 70Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
         <path d="M68 70 C62 56 60 46 60 40" stroke="#4a6f47" stroke-width="0.9" fill="none" opacity="0.65"/>
-        <!-- Main rose at (72, 68) — 5 outer petals + 5 inner + centre -->
         <g transform="translate(72,68)">
           <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92"/>
           <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92" transform="rotate(72)"/>
@@ -426,14 +428,12 @@
           <circle r="5.5" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1"/>
           <circle r="2.5" fill="#f9d5e5"/>
         </g>
-        <!-- Rose bud upper-right corner -->
         <g transform="translate(118,20)">
           <path d="M0,0 C-5,-3 -7,-9 -4,-13 C-1,-16 4,-16 5,-12 C7,-9 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" transform="rotate(-25)"/>
           <path d="M0,0 C-5,-3 -7,-9 -4,-13 C-1,-16 4,-16 5,-12 C7,-9 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" transform="rotate(35)"/>
           <path d="M0,0 C-5,-3 -7,-9 -4,-13 C-1,-16 4,-16 5,-12 C7,-9 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" transform="rotate(95)"/>
           <circle r="4" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8"/>
         </g>
-        <!-- Rose bud lower-left corner -->
         <g transform="translate(24,120)">
           <path d="M0,0 C-5,-3 -6,-8 -3,-11 C-1,-14 3,-14 4,-11 C6,-8 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" transform="rotate(-25)"/>
           <path d="M0,0 C-5,-3 -6,-8 -3,-11 C-1,-14 3,-14 4,-11 C6,-8 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" transform="rotate(40)"/>
@@ -552,8 +552,6 @@
         </g>
       </svg>
 
-
-      <!-- Invitation text -->
       <p class="monogram">S &amp; H</p>
       <div class="divider"></div>
 
@@ -566,11 +564,8 @@
 
       <div class="divider"></div>
 
-      <p class="cta-text">
-        You are cordially invited
-      </p>
+      <p class="cta-text">You are cordially invited</p>
 
-      <!-- RSVP button — shown after the card opens -->
       <a href="https://example.com/wedding-details" class="rsvp-btn" id="rsvpBtn" aria-label="RSVP — View full invitation">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 21.593C6.37 16.054 1 11.296 1 7.191 1 3.4 4.068 2 6.281 2c1.312 0 4.151.501 5.719 4.457C13.59 2.491 16.464 2 17.726 2 20.266 2 23 3.621 23 7.181c0 4.069-5.136 8.625-11 14.412z"/>
@@ -579,168 +574,238 @@
       </a>
     </div><!-- /.card-inner -->
 
-    <!-- Double-door panels (overlay) -->
-    <div class="doors">
+    <!-- ── ENVELOPE OVERLAY ── -->
+    <div class="envelope" id="envelope">
 
-      <!-- Left door -->
-      <div class="door left" id="doorLeft">
-        <div class="door-face">
-          <!-- Left half floral SVG — roses with leaves along a stem -->
-          <svg class="door-floral" viewBox="0 0 200 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Vertical stem with gentle curves -->
-            <path d="M100 490 C97 420 103 360 98 290 C94 220 104 150 98 80" stroke="#c87c96" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-            <!-- Leaves (elongated teardrop, alternating sides) -->
-            <path d="M100 420 C80 408 68 390 78 376 C92 378 104 400 100 420Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1" opacity="0.85"/>
-            <path d="M100 420 C88 408 82 396 78 376" stroke="#4a6f47" stroke-width="0.8" fill="none" opacity="0.6"/>
-            <path d="M100 360 C122 346 136 328 124 314 C110 316 100 340 100 360Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1" opacity="0.85"/>
-            <path d="M100 360 C112 348 122 332 124 314" stroke="#4a6f47" stroke-width="0.8" fill="none" opacity="0.6"/>
-            <path d="M100 295 C78 283 64 264 76 252 C90 252 104 272 100 295Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1" opacity="0.85"/>
-            <path d="M100 295 C86 280 76 262 76 252" stroke="#4a6f47" stroke-width="0.8" fill="none" opacity="0.6"/>
-            <path d="M100 230 C120 216 136 198 124 185 C110 186 100 210 100 230Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1" opacity="0.85"/>
-            <path d="M100 230 C114 216 124 200 124 185" stroke="#4a6f47" stroke-width="0.8" fill="none" opacity="0.6"/>
-            <path d="M100 165 C78 152 65 134 76 122 C90 124 104 144 100 165Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1" opacity="0.85"/>
-            <path d="M100 165 C86 150 78 134 76 122" stroke="#4a6f47" stroke-width="0.8" fill="none" opacity="0.6"/>
-            <!-- Rose 1 (large, mid-lower) at (98, 440) -->
-            <g transform="translate(98,440)">
-              <path d="M0,0 C-9,-6 -13,-18 -7,-26 C-2,-30 3,-30 8,-26 C13,-18 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1.1" opacity="0.9"/>
-              <path d="M0,0 C-9,-6 -13,-18 -7,-26 C-2,-30 3,-30 8,-26 C13,-18 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1.1" opacity="0.9" transform="rotate(72)"/>
-              <path d="M0,0 C-9,-6 -13,-18 -7,-26 C-2,-30 3,-30 8,-26 C13,-18 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1.1" opacity="0.9" transform="rotate(144)"/>
-              <path d="M0,0 C-9,-6 -13,-18 -7,-26 C-2,-30 3,-30 8,-26 C13,-18 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1.1" opacity="0.9" transform="rotate(216)"/>
-              <path d="M0,0 C-9,-6 -13,-18 -7,-26 C-2,-30 3,-30 8,-26 C13,-18 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1.1" opacity="0.9" transform="rotate(288)"/>
-              <path d="M0,0 C-5,-4 -7,-11 -4,-15 C-1,-18 4,-18 5,-14 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(36)"/>
-              <path d="M0,0 C-5,-4 -7,-11 -4,-15 C-1,-18 4,-18 5,-14 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(108)"/>
-              <path d="M0,0 C-5,-4 -7,-11 -4,-15 C-1,-18 4,-18 5,-14 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(180)"/>
-              <path d="M0,0 C-5,-4 -7,-11 -4,-15 C-1,-18 4,-18 5,-14 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(252)"/>
-              <path d="M0,0 C-5,-4 -7,-11 -4,-15 C-1,-18 4,-18 5,-14 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(324)"/>
-              <circle r="6" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1"/>
-              <circle r="2.8" fill="#f9d5e5"/>
-            </g>
-            <!-- Rose 2 (medium, mid) at (100, 310) -->
-            <g transform="translate(100,310)">
-              <path d="M0,0 C-8,-5 -11,-15 -6,-22 C-2,-26 3,-26 7,-22 C11,-15 8,-5 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1.1" opacity="0.9"/>
-              <path d="M0,0 C-8,-5 -11,-15 -6,-22 C-2,-26 3,-26 7,-22 C11,-15 8,-5 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1.1" opacity="0.9" transform="rotate(72)"/>
-              <path d="M0,0 C-8,-5 -11,-15 -6,-22 C-2,-26 3,-26 7,-22 C11,-15 8,-5 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1.1" opacity="0.9" transform="rotate(144)"/>
-              <path d="M0,0 C-8,-5 -11,-15 -6,-22 C-2,-26 3,-26 7,-22 C11,-15 8,-5 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1.1" opacity="0.9" transform="rotate(216)"/>
-              <path d="M0,0 C-8,-5 -11,-15 -6,-22 C-2,-26 3,-26 7,-22 C11,-15 8,-5 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1.1" opacity="0.9" transform="rotate(288)"/>
-              <path d="M0,0 C-4,-3 -6,-9 -3,-13 C-1,-15 3,-15 4,-12 C6,-9 4,-3 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(36)"/>
-              <path d="M0,0 C-4,-3 -6,-9 -3,-13 C-1,-15 3,-15 4,-12 C6,-9 4,-3 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(108)"/>
-              <path d="M0,0 C-4,-3 -6,-9 -3,-13 C-1,-15 3,-15 4,-12 C6,-9 4,-3 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(180)"/>
-              <path d="M0,0 C-4,-3 -6,-9 -3,-13 C-1,-15 3,-15 4,-12 C6,-9 4,-3 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(252)"/>
-              <path d="M0,0 C-4,-3 -6,-9 -3,-13 C-1,-15 3,-15 4,-12 C6,-9 4,-3 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(324)"/>
-              <circle r="5" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1"/>
-              <circle r="2.2" fill="#f9eeff"/>
-            </g>
-            <!-- Rose 3 (small) at (97, 175) -->
-            <g transform="translate(97,175)">
-              <path d="M0,0 C-6,-4 -8,-12 -5,-17 C-1,-20 3,-20 5,-16 C8,-12 6,-4 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.88" transform="rotate(0)"/>
-              <path d="M0,0 C-6,-4 -8,-12 -5,-17 C-1,-20 3,-20 5,-16 C8,-12 6,-4 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.88" transform="rotate(72)"/>
-              <path d="M0,0 C-6,-4 -8,-12 -5,-17 C-1,-20 3,-20 5,-16 C8,-12 6,-4 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.88" transform="rotate(144)"/>
-              <path d="M0,0 C-6,-4 -8,-12 -5,-17 C-1,-20 3,-20 5,-16 C8,-12 6,-4 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.88" transform="rotate(216)"/>
-              <path d="M0,0 C-6,-4 -8,-12 -5,-17 C-1,-20 3,-20 5,-16 C8,-12 6,-4 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.88" transform="rotate(288)"/>
-              <circle r="4.5" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.9"/>
-              <circle r="2" fill="#f9d5e5"/>
-            </g>
-            <!-- Rose bud 4 (tiny) at (99, 95) -->
-            <g transform="translate(99,95)">
-              <path d="M0,0 C-5,-3 -6,-9 -3,-13 C0,-16 4,-16 4,-12 C6,-8 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.85" transform="rotate(-20)"/>
-              <path d="M0,0 C-5,-3 -6,-9 -3,-13 C0,-16 4,-16 4,-12 C6,-8 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.85" transform="rotate(60)"/>
-              <path d="M0,0 C-5,-3 -6,-9 -3,-13 C0,-16 4,-16 4,-12 C6,-8 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.85" transform="rotate(130)"/>
-              <circle r="3.5" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8"/>
-            </g>
-          </svg>
-        </div>
-        <p class="door-hint">Open me</p>
+      <!-- Body background with fold-line decoration -->
+      <div class="env-body">
+        <svg class="env-fold-lines" viewBox="0 0 380 532" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Bottom-left to centre diamond crease -->
+          <line x1="0"   y1="532" x2="190" y2="310" stroke="rgba(232,160,180,0.22)" stroke-width="1.5"/>
+          <!-- Bottom-right to centre diamond crease -->
+          <line x1="380" y1="532" x2="190" y2="310" stroke="rgba(232,160,180,0.22)" stroke-width="1.5"/>
+          <!-- Top-left crease (subtly visible under flap) -->
+          <line x1="0"   y1="0"   x2="190" y2="222" stroke="rgba(232,160,180,0.12)" stroke-width="1"/>
+          <!-- Top-right crease -->
+          <line x1="380" y1="0"   x2="190" y2="222" stroke="rgba(232,160,180,0.12)" stroke-width="1"/>
+        </svg>
       </div>
 
-      <!-- Right door (mirror) -->
-      <div class="door right" id="doorRight">
-        <div class="door-face">
-          <svg class="door-floral" viewBox="0 0 200 500" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform:scaleX(-1);">
-            <path d="M100 490 C97 420 103 360 98 290 C94 220 104 150 98 80" stroke="#c87c96" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-            <path d="M100 420 C80 408 68 390 78 376 C92 378 104 400 100 420Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1" opacity="0.85"/>
-            <path d="M100 420 C88 408 82 396 78 376" stroke="#4a6f47" stroke-width="0.8" fill="none" opacity="0.6"/>
-            <path d="M100 360 C122 346 136 328 124 314 C110 316 100 340 100 360Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1" opacity="0.85"/>
-            <path d="M100 360 C112 348 122 332 124 314" stroke="#4a6f47" stroke-width="0.8" fill="none" opacity="0.6"/>
-            <path d="M100 295 C78 283 64 264 76 252 C90 252 104 272 100 295Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1" opacity="0.85"/>
-            <path d="M100 295 C86 280 76 262 76 252" stroke="#4a6f47" stroke-width="0.8" fill="none" opacity="0.6"/>
-            <path d="M100 230 C120 216 136 198 124 185 C110 186 100 210 100 230Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1" opacity="0.85"/>
-            <path d="M100 230 C114 216 124 200 124 185" stroke="#4a6f47" stroke-width="0.8" fill="none" opacity="0.6"/>
-            <path d="M100 165 C78 152 65 134 76 122 C90 124 104 144 100 165Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1" opacity="0.85"/>
-            <path d="M100 165 C86 150 78 134 76 122" stroke="#4a6f47" stroke-width="0.8" fill="none" opacity="0.6"/>
-            <g transform="translate(98,440)">
-              <path d="M0,0 C-9,-6 -13,-18 -7,-26 C-2,-30 3,-30 8,-26 C13,-18 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1.1" opacity="0.9"/>
-              <path d="M0,0 C-9,-6 -13,-18 -7,-26 C-2,-30 3,-30 8,-26 C13,-18 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1.1" opacity="0.9" transform="rotate(72)"/>
-              <path d="M0,0 C-9,-6 -13,-18 -7,-26 C-2,-30 3,-30 8,-26 C13,-18 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1.1" opacity="0.9" transform="rotate(144)"/>
-              <path d="M0,0 C-9,-6 -13,-18 -7,-26 C-2,-30 3,-30 8,-26 C13,-18 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1.1" opacity="0.9" transform="rotate(216)"/>
-              <path d="M0,0 C-9,-6 -13,-18 -7,-26 C-2,-30 3,-30 8,-26 C13,-18 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1.1" opacity="0.9" transform="rotate(288)"/>
-              <path d="M0,0 C-5,-4 -7,-11 -4,-15 C-1,-18 4,-18 5,-14 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(36)"/>
-              <path d="M0,0 C-5,-4 -7,-11 -4,-15 C-1,-18 4,-18 5,-14 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(108)"/>
-              <path d="M0,0 C-5,-4 -7,-11 -4,-15 C-1,-18 4,-18 5,-14 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(180)"/>
-              <path d="M0,0 C-5,-4 -7,-11 -4,-15 C-1,-18 4,-18 5,-14 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(252)"/>
-              <path d="M0,0 C-5,-4 -7,-11 -4,-15 C-1,-18 4,-18 5,-14 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(324)"/>
-              <circle r="6" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1"/>
-              <circle r="2.8" fill="#f9eeff"/>
-            </g>
-            <g transform="translate(100,310)">
-              <path d="M0,0 C-8,-5 -11,-15 -6,-22 C-2,-26 3,-26 7,-22 C11,-15 8,-5 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1.1" opacity="0.9"/>
-              <path d="M0,0 C-8,-5 -11,-15 -6,-22 C-2,-26 3,-26 7,-22 C11,-15 8,-5 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1.1" opacity="0.9" transform="rotate(72)"/>
-              <path d="M0,0 C-8,-5 -11,-15 -6,-22 C-2,-26 3,-26 7,-22 C11,-15 8,-5 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1.1" opacity="0.9" transform="rotate(144)"/>
-              <path d="M0,0 C-8,-5 -11,-15 -6,-22 C-2,-26 3,-26 7,-22 C11,-15 8,-5 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1.1" opacity="0.9" transform="rotate(216)"/>
-              <path d="M0,0 C-8,-5 -11,-15 -6,-22 C-2,-26 3,-26 7,-22 C11,-15 8,-5 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1.1" opacity="0.9" transform="rotate(288)"/>
-              <path d="M0,0 C-4,-3 -6,-9 -3,-13 C-1,-15 3,-15 4,-12 C6,-9 4,-3 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(36)"/>
-              <path d="M0,0 C-4,-3 -6,-9 -3,-13 C-1,-15 3,-15 4,-12 C6,-9 4,-3 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(108)"/>
-              <path d="M0,0 C-4,-3 -6,-9 -3,-13 C-1,-15 3,-15 4,-12 C6,-9 4,-3 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(180)"/>
-              <path d="M0,0 C-4,-3 -6,-9 -3,-13 C-1,-15 3,-15 4,-12 C6,-9 4,-3 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(252)"/>
-              <path d="M0,0 C-4,-3 -6,-9 -3,-13 C-1,-15 3,-15 4,-12 C6,-9 4,-3 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(324)"/>
-              <circle r="5" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1"/>
-              <circle r="2.2" fill="#f9d5e5"/>
-            </g>
-            <g transform="translate(97,175)">
-              <path d="M0,0 C-6,-4 -8,-12 -5,-17 C-1,-20 3,-20 5,-16 C8,-12 6,-4 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.88" transform="rotate(0)"/>
-              <path d="M0,0 C-6,-4 -8,-12 -5,-17 C-1,-20 3,-20 5,-16 C8,-12 6,-4 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.88" transform="rotate(72)"/>
-              <path d="M0,0 C-6,-4 -8,-12 -5,-17 C-1,-20 3,-20 5,-16 C8,-12 6,-4 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.88" transform="rotate(144)"/>
-              <path d="M0,0 C-6,-4 -8,-12 -5,-17 C-1,-20 3,-20 5,-16 C8,-12 6,-4 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.88" transform="rotate(216)"/>
-              <path d="M0,0 C-6,-4 -8,-12 -5,-17 C-1,-20 3,-20 5,-16 C8,-12 6,-4 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.88" transform="rotate(288)"/>
-              <circle r="4.5" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.9"/>
-              <circle r="2" fill="#fff"/>
-            </g>
-            <g transform="translate(99,95)">
-              <path d="M0,0 C-5,-3 -6,-9 -3,-13 C0,-16 4,-16 4,-12 C6,-8 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.85" transform="rotate(-20)"/>
-              <path d="M0,0 C-5,-3 -6,-9 -3,-13 C0,-16 4,-16 4,-12 C6,-8 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.85" transform="rotate(60)"/>
-              <path d="M0,0 C-5,-3 -6,-9 -3,-13 C0,-16 4,-16 4,-12 C6,-8 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.85" transform="rotate(130)"/>
-              <circle r="3.5" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8"/>
-            </g>
-          </svg>
-        </div>
-        <p class="door-hint">Open me</p>
-      </div>
+      <!-- Corner flowers on envelope (same rose motif as the invite card) -->
+      <svg class="env-flower tl" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M10 132 C28 112 48 92 68 70 C88 48 110 30 132 10" stroke="#c87c96" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M30 112 C14 100 12 84 22 76 C36 82 38 102 30 112Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M44 94 C60 86 62 68 52 62 C40 68 40 84 44 94Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M96 46 C112 34 128 34 130 46 C118 56 100 54 96 46Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M68 70 C54 60 50 46 60 40 C72 44 74 62 68 70Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <g transform="translate(72,68)">
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92" transform="rotate(72)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.92" transform="rotate(144)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92" transform="rotate(216)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.92" transform="rotate(288)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(36)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(108)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(180)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(252)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(324)"/>
+          <circle r="5.5" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1"/>
+          <circle r="2.5" fill="#f9d5e5"/>
+        </g>
+        <g transform="translate(118,20)">
+          <path d="M0,0 C-5,-3 -7,-9 -4,-13 C-1,-16 4,-16 5,-12 C7,-9 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" transform="rotate(-25)"/>
+          <path d="M0,0 C-5,-3 -7,-9 -4,-13 C-1,-16 4,-16 5,-12 C7,-9 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" transform="rotate(35)"/>
+          <circle r="4" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8"/>
+        </g>
+        <g transform="translate(24,120)">
+          <path d="M0,0 C-5,-3 -6,-8 -3,-11 C-1,-14 3,-14 4,-11 C6,-8 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" transform="rotate(-25)"/>
+          <path d="M0,0 C-5,-3 -6,-8 -3,-11 C-1,-14 3,-14 4,-11 C6,-8 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" transform="rotate(40)"/>
+          <circle r="3.5" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8"/>
+        </g>
+      </svg>
 
-      <!-- Wax seal sits between the two doors -->
+      <svg class="env-flower tr" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M10 132 C28 112 48 92 68 70 C88 48 110 30 132 10" stroke="#c87c96" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M30 112 C14 100 12 84 22 76 C36 82 38 102 30 112Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M44 94 C60 86 62 68 52 62 C40 68 40 84 44 94Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M96 46 C112 34 128 34 130 46 C118 56 100 54 96 46Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M68 70 C54 60 50 46 60 40 C72 44 74 62 68 70Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <g transform="translate(72,68)">
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.92"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92" transform="rotate(72)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.92" transform="rotate(144)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92" transform="rotate(216)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.92" transform="rotate(288)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(36)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(108)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(180)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(252)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(324)"/>
+          <circle r="5.5" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1"/>
+          <circle r="2.5" fill="#f9eeff"/>
+        </g>
+        <g transform="translate(118,20)">
+          <path d="M0,0 C-5,-3 -7,-9 -4,-13 C-1,-16 4,-16 5,-12 C7,-9 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" transform="rotate(-25)"/>
+          <path d="M0,0 C-5,-3 -7,-9 -4,-13 C-1,-16 4,-16 5,-12 C7,-9 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" transform="rotate(35)"/>
+          <circle r="4" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8"/>
+        </g>
+        <g transform="translate(24,120)">
+          <path d="M0,0 C-5,-3 -6,-8 -3,-11 C-1,-14 3,-14 4,-11 C6,-8 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" transform="rotate(-25)"/>
+          <path d="M0,0 C-5,-3 -6,-8 -3,-11 C-1,-14 3,-14 4,-11 C6,-8 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" transform="rotate(40)"/>
+          <circle r="3.5" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8"/>
+        </g>
+      </svg>
+
+      <svg class="env-flower bl" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M10 132 C28 112 48 92 68 70 C88 48 110 30 132 10" stroke="#c87c96" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M30 112 C14 100 12 84 22 76 C36 82 38 102 30 112Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M44 94 C60 86 62 68 52 62 C40 68 40 84 44 94Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M96 46 C112 34 128 34 130 46 C118 56 100 54 96 46Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M68 70 C54 60 50 46 60 40 C72 44 74 62 68 70Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <g transform="translate(72,68)">
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.92" transform="rotate(72)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92" transform="rotate(144)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.92" transform="rotate(216)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92" transform="rotate(288)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(36)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(108)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(180)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(252)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(324)"/>
+          <circle r="5.5" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1"/>
+          <circle r="2.5" fill="#f9d5e5"/>
+        </g>
+        <g transform="translate(118,20)">
+          <path d="M0,0 C-5,-3 -7,-9 -4,-13 C-1,-16 4,-16 5,-12 C7,-9 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" transform="rotate(-25)"/>
+          <path d="M0,0 C-5,-3 -7,-9 -4,-13 C-1,-16 4,-16 5,-12 C7,-9 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" transform="rotate(35)"/>
+          <circle r="4" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8"/>
+        </g>
+        <g transform="translate(24,120)">
+          <path d="M0,0 C-5,-3 -6,-8 -3,-11 C-1,-14 3,-14 4,-11 C6,-8 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" transform="rotate(-25)"/>
+          <path d="M0,0 C-5,-3 -6,-8 -3,-11 C-1,-14 3,-14 4,-11 C6,-8 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" transform="rotate(40)"/>
+          <circle r="3.5" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8"/>
+        </g>
+      </svg>
+
+      <svg class="env-flower br" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M10 132 C28 112 48 92 68 70 C88 48 110 30 132 10" stroke="#c87c96" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M30 112 C14 100 12 84 22 76 C36 82 38 102 30 112Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M44 94 C60 86 62 68 52 62 C40 68 40 84 44 94Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M96 46 C112 34 128 34 130 46 C118 56 100 54 96 46Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <path d="M68 70 C54 60 50 46 60 40 C72 44 74 62 68 70Z" fill="#7ea87a" stroke="#5a7f56" stroke-width="1.1" opacity="0.9"/>
+        <g transform="translate(72,68)">
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.92"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92" transform="rotate(72)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.92" transform="rotate(144)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" opacity="0.92" transform="rotate(216)"/>
+          <path d="M0,0 C-9,-6 -12,-17 -7,-24 C-2,-28 2,-28 7,-24 C12,-17 9,-6 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" opacity="0.92" transform="rotate(288)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(36)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(108)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(180)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8" transform="rotate(252)"/>
+          <path d="M0,0 C-5,-4 -7,-10 -4,-14 C-1,-17 4,-17 5,-13 C7,-10 5,-4 0,0Z" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8" transform="rotate(324)"/>
+          <circle r="5.5" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1"/>
+          <circle r="2.5" fill="#f9eeff"/>
+        </g>
+        <g transform="translate(118,20)">
+          <path d="M0,0 C-5,-3 -7,-9 -4,-13 C-1,-16 4,-16 5,-12 C7,-9 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" transform="rotate(-25)"/>
+          <path d="M0,0 C-5,-3 -7,-9 -4,-13 C-1,-16 4,-16 5,-12 C7,-9 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" transform="rotate(35)"/>
+          <circle r="4" fill="#f3e5f5" stroke="#c9a9d3" stroke-width="0.8"/>
+        </g>
+        <g transform="translate(24,120)">
+          <path d="M0,0 C-5,-3 -6,-8 -3,-11 C-1,-14 3,-14 4,-11 C6,-8 5,-3 0,0Z" fill="#e8a0b4" stroke="#c97fa0" stroke-width="1" transform="rotate(-25)"/>
+          <path d="M0,0 C-5,-3 -6,-8 -3,-11 C-1,-14 3,-14 4,-11 C6,-8 5,-3 0,0Z" fill="#dcc6e0" stroke="#c9a9d3" stroke-width="1" transform="rotate(40)"/>
+          <circle r="3.5" fill="#f9c8d8" stroke="#c97fa0" stroke-width="0.8"/>
+        </g>
+      </svg>
+
+      <!-- Postage stamp (top-right corner of the envelope) -->
+      <svg class="env-stamp" viewBox="0 0 52 66" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <mask id="perf-mask">
+            <rect width="52" height="66" fill="white"/>
+            <!-- Top edge perforations -->
+            <circle cx="2.5"  cy="0" r="2.6" fill="black"/><circle cx="7.8"  cy="0" r="2.6" fill="black"/>
+            <circle cx="13.1" cy="0" r="2.6" fill="black"/><circle cx="18.4" cy="0" r="2.6" fill="black"/>
+            <circle cx="23.7" cy="0" r="2.6" fill="black"/><circle cx="29.0" cy="0" r="2.6" fill="black"/>
+            <circle cx="34.3" cy="0" r="2.6" fill="black"/><circle cx="39.6" cy="0" r="2.6" fill="black"/>
+            <circle cx="44.9" cy="0" r="2.6" fill="black"/><circle cx="50.2" cy="0" r="2.6" fill="black"/>
+            <!-- Bottom edge perforations -->
+            <circle cx="2.5"  cy="66" r="2.6" fill="black"/><circle cx="7.8"  cy="66" r="2.6" fill="black"/>
+            <circle cx="13.1" cy="66" r="2.6" fill="black"/><circle cx="18.4" cy="66" r="2.6" fill="black"/>
+            <circle cx="23.7" cy="66" r="2.6" fill="black"/><circle cx="29.0" cy="66" r="2.6" fill="black"/>
+            <circle cx="34.3" cy="66" r="2.6" fill="black"/><circle cx="39.6" cy="66" r="2.6" fill="black"/>
+            <circle cx="44.9" cy="66" r="2.6" fill="black"/><circle cx="50.2" cy="66" r="2.6" fill="black"/>
+            <!-- Left edge perforations -->
+            <circle cx="0" cy="3.0"  r="2.6" fill="black"/><circle cx="0" cy="8.3"  r="2.6" fill="black"/>
+            <circle cx="0" cy="13.6" r="2.6" fill="black"/><circle cx="0" cy="18.9" r="2.6" fill="black"/>
+            <circle cx="0" cy="24.2" r="2.6" fill="black"/><circle cx="0" cy="29.5" r="2.6" fill="black"/>
+            <circle cx="0" cy="34.8" r="2.6" fill="black"/><circle cx="0" cy="40.1" r="2.6" fill="black"/>
+            <circle cx="0" cy="45.4" r="2.6" fill="black"/><circle cx="0" cy="50.7" r="2.6" fill="black"/>
+            <circle cx="0" cy="56.0" r="2.6" fill="black"/><circle cx="0" cy="61.3" r="2.6" fill="black"/>
+            <!-- Right edge perforations -->
+            <circle cx="52" cy="3.0"  r="2.6" fill="black"/><circle cx="52" cy="8.3"  r="2.6" fill="black"/>
+            <circle cx="52" cy="13.6" r="2.6" fill="black"/><circle cx="52" cy="18.9" r="2.6" fill="black"/>
+            <circle cx="52" cy="24.2" r="2.6" fill="black"/><circle cx="52" cy="29.5" r="2.6" fill="black"/>
+            <circle cx="52" cy="34.8" r="2.6" fill="black"/><circle cx="52" cy="40.1" r="2.6" fill="black"/>
+            <circle cx="52" cy="45.4" r="2.6" fill="black"/><circle cx="52" cy="50.7" r="2.6" fill="black"/>
+            <circle cx="52" cy="56.0" r="2.6" fill="black"/><circle cx="52" cy="61.3" r="2.6" fill="black"/>
+          </mask>
+        </defs>
+        <!-- Cream stamp body with perforated edges -->
+        <rect width="52" height="66" fill="#fff9f0" mask="url(#perf-mask)"/>
+        <!-- Gold outer border -->
+        <rect x="3.5" y="3.5" width="45" height="59" rx="1" fill="none" stroke="#c9a96e" stroke-width="1.2"/>
+        <!-- Inner margin -->
+        <rect x="7" y="7" width="38" height="52" rx="0.5" fill="none" stroke="#c9a96e" stroke-width="0.5" opacity="0.6"/>
+        <!-- Rose motif -->
+        <g transform="translate(26,26)">
+          <path d="M0,0 C-4,-2.5 -5.5,-8 -3,-11 C-1,-13.5 2.5,-13.5 4,-10.5 C5.5,-8 4,-2.5 0,0Z" fill="#e8a0b4" opacity="0.9"/>
+          <path d="M0,0 C-4,-2.5 -5.5,-8 -3,-11 C-1,-13.5 2.5,-13.5 4,-10.5 C5.5,-8 4,-2.5 0,0Z" fill="#e8a0b4" opacity="0.9" transform="rotate(72)"/>
+          <path d="M0,0 C-4,-2.5 -5.5,-8 -3,-11 C-1,-13.5 2.5,-13.5 4,-10.5 C5.5,-8 4,-2.5 0,0Z" fill="#dcc6e0" opacity="0.9" transform="rotate(144)"/>
+          <path d="M0,0 C-4,-2.5 -5.5,-8 -3,-11 C-1,-13.5 2.5,-13.5 4,-10.5 C5.5,-8 4,-2.5 0,0Z" fill="#e8a0b4" opacity="0.9" transform="rotate(216)"/>
+          <path d="M0,0 C-4,-2.5 -5.5,-8 -3,-11 C-1,-13.5 2.5,-13.5 4,-10.5 C5.5,-8 4,-2.5 0,0Z" fill="#dcc6e0" opacity="0.9" transform="rotate(288)"/>
+          <circle r="3.8" fill="#f9c8d8"/>
+          <circle r="1.8" fill="#fff6fa"/>
+        </g>
+        <!-- Leaf accents -->
+        <path d="M16 26 C13 22 14 18 17 18 C19 20 18 24 16 26Z" fill="#7ea87a" opacity="0.7"/>
+        <path d="M36 26 C39 22 38 18 35 18 C33 20 34 24 36 26Z" fill="#7ea87a" opacity="0.7"/>
+        <!-- Monogram -->
+        <text x="26" y="45" text-anchor="middle"
+              font-family="Cormorant Garamond, Georgia, serif"
+              font-size="7" font-style="italic" fill="#c9a96e" letter-spacing="1">S &amp; H</text>
+        <!-- "LOVE" denomination -->
+        <text x="26" y="53" text-anchor="middle"
+              font-family="Lato, Arial, sans-serif" font-size="3.8"
+              fill="#c9a96e" letter-spacing="2.5">LOVE</text>
+      </svg>
+
+      <!-- Triangular flap (folds open on click) -->
+      <div class="env-flap"></div>
+
+      <!-- Wax seal at the flap tip -->
       <div class="wax-seal">
-        <!-- Embossed stamp impression pressed into the wax -->
         <svg class="seal-svg" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="S and H monogram seal">
-          <!-- Outer decorative ring -->
           <circle cx="40" cy="40" r="34" stroke="rgba(255,248,245,0.32)" stroke-width="1.5"/>
-          <!-- Dashed inner ring -->
           <circle cx="40" cy="40" r="28" stroke="rgba(255,248,245,0.24)" stroke-width="1" stroke-dasharray="3.5 2.5"/>
-          <!-- 12 compass dots around outer ring -->
-          <circle cx="40" cy="6" r="1.6" fill="rgba(255,248,245,0.42)"/>
+          <circle cx="40" cy="6"    r="1.6" fill="rgba(255,248,245,0.42)"/>
           <circle cx="57" cy="11.5" r="1.6" fill="rgba(255,248,245,0.42)"/>
           <circle cx="68.5" cy="23" r="1.6" fill="rgba(255,248,245,0.42)"/>
-          <circle cx="74" cy="40" r="1.6" fill="rgba(255,248,245,0.42)"/>
+          <circle cx="74"  cy="40"  r="1.6" fill="rgba(255,248,245,0.42)"/>
           <circle cx="68.5" cy="57" r="1.6" fill="rgba(255,248,245,0.42)"/>
           <circle cx="57" cy="68.5" r="1.6" fill="rgba(255,248,245,0.42)"/>
-          <circle cx="40" cy="74" r="1.6" fill="rgba(255,248,245,0.42)"/>
+          <circle cx="40" cy="74"   r="1.6" fill="rgba(255,248,245,0.42)"/>
           <circle cx="23" cy="68.5" r="1.6" fill="rgba(255,248,245,0.42)"/>
           <circle cx="11.5" cy="57" r="1.6" fill="rgba(255,248,245,0.42)"/>
-          <circle cx="6" cy="40" r="1.6" fill="rgba(255,248,245,0.42)"/>
+          <circle cx="6"   cy="40"  r="1.6" fill="rgba(255,248,245,0.42)"/>
           <circle cx="11.5" cy="23" r="1.6" fill="rgba(255,248,245,0.42)"/>
           <circle cx="23" cy="11.5" r="1.6" fill="rgba(255,248,245,0.42)"/>
-          <!-- Small rose ornament top -->
-          <path d="M40 16 C37 12 33 12 33 16 C33 19 36 21 40 20 C44 21 47 19 47 16 C47 12 43 12 40 16Z" fill="rgba(255,248,245,0.28)" stroke="rgba(255,248,245,0.28)" stroke-width="0.5"/>
-          <!-- Small rose ornament bottom -->
-          <path d="M40 64 C37 68 33 68 33 64 C33 61 36 59 40 60 C44 59 47 61 47 64 C47 68 43 68 40 64Z" fill="rgba(255,248,245,0.28)" stroke="rgba(255,248,245,0.28)" stroke-width="0.5"/>
-          <!-- Monogram S & H -->
+          <path d="M40 16 C37 12 33 12 33 16 C33 19 36 21 40 20 C44 21 47 19 47 16 C47 12 43 12 40 16Z"
+                fill="rgba(255,248,245,0.28)" stroke="rgba(255,248,245,0.28)" stroke-width="0.5"/>
+          <path d="M40 64 C37 68 33 68 33 64 C33 61 36 59 40 60 C44 59 47 61 47 64 C47 68 43 68 40 64Z"
+                fill="rgba(255,248,245,0.28)" stroke="rgba(255,248,245,0.28)" stroke-width="0.5"/>
           <text x="40" y="47" text-anchor="middle"
                 font-family="Cormorant Garamond, Georgia, serif"
                 font-size="20" font-style="italic" font-weight="400"
@@ -748,7 +813,10 @@
                 letter-spacing="2">S&amp;H</text>
         </svg>
       </div>
-    </div><!-- /.doors -->
+
+      <p class="env-hint">Click to open</p>
+
+    </div><!-- /.envelope -->
 
   </div><!-- /.card-wrapper -->
 </div><!-- /.scene -->
@@ -759,37 +827,34 @@
      Configuration — replace WEDDING_URL with the actual page
   ============================================================ */
   const WEDDING_URL = 'https://example.com/wedding-details'; // ← update this URL
-
-  // Wire WEDDING_URL to the RSVP button
   document.getElementById('rsvpBtn').href = WEDDING_URL;
 
   /* ============================================================
-     Floating petals
+     Floating bubbles
   ============================================================ */
-  (function spawnPetals() {
-    const container = document.getElementById('petals');
-    const colours = ['#f9d5e5','#dcc6e0','#cce0c8','#fde8d8','#e8d5f0'];
-    const sizes   = [8, 10, 12, 14, 7, 9];
-
-    for (let i = 0; i < 28; i++) {
+  (function spawnBubbles() {
+    const container = document.getElementById('bubbles');
+    for (let i = 0; i < 26; i++) {
       const el = document.createElement('div');
-      el.classList.add('petal');
-      const size = sizes[Math.floor(Math.random() * sizes.length)];
+      el.classList.add('bubble');
+      const size   = 8 + Math.random() * 32;
+      const drift  = (Math.random() - 0.5) * 80;
+      const drift2 = (Math.random() - 0.5) * 40;
       el.style.cssText = [
         `width:${size}px`,
-        `height:${size * 1.2}px`,
+        `height:${size}px`,
         `left:${Math.random() * 100}%`,
-        `background:${colours[Math.floor(Math.random() * colours.length)]}`,
-        `animation-duration:${8 + Math.random() * 14}s`,
-        `animation-delay:${-Math.random() * 20}s`,
-        `border-radius:${40 + Math.random() * 30}% ${60 - Math.random() * 20}% ${50 + Math.random() * 20}% ${30 + Math.random() * 20}%`
+        `--drift:${drift}px`,
+        `--drift2:${drift2}px`,
+        `animation-duration:${10 + Math.random() * 18}s`,
+        `animation-delay:${-Math.random() * 28}s`,
       ].join(';');
       container.appendChild(el);
     }
   }());
 
   /* ============================================================
-     Door-opening interaction
+     Envelope-opening interaction
   ============================================================ */
   const card = document.getElementById('card');
   let opened = false;
@@ -812,10 +877,12 @@
   function openCard(e) {
     if (opened) return;
     opened = true;
-
     triggerRipple(e);
-
-    // Add open class — CSS handles the 3-D door swing
+    // CSS transitions handle the sequence automatically (see :root timing variables):
+    // 1. wax seal fades   (0 – --t-seal-fade)
+    // 2. flap rotates open (--t-flap-delay – end)
+    // 3. envelope fades   (--t-env-delay – end)
+    // 4. invite card in   (--t-card-delay – end)
     card.classList.add('open');
   }
 
