@@ -39,7 +39,8 @@
       align-items: center;
       justify-content: center;
       font-family: 'Lato', sans-serif;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     /* =====================================================
@@ -67,6 +68,9 @@
       z-index: 1;
       perspective: 1400px;
       width: min(420px, 92vw);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     /* =====================================================
@@ -380,6 +384,59 @@
       transform: translateY(0);
       pointer-events: auto;
     }
+
+    /* =====================================================
+       "Click to view inside" hint — shown over the door area
+    ===================================================== */
+    .click-hint {
+      position: absolute;
+      top: 14px;
+      left: 0; right: 0;
+      text-align: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(0.6rem, 2vw, 0.72rem);
+      letter-spacing: 0.22em;
+      color: #c8602a;
+      text-transform: uppercase;
+      z-index: 4;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.4s ease;
+    }
+    .card-wrapper.open .click-hint {
+      opacity: 0;
+    }
+
+    /* =====================================================
+       Front label — couple name & date below the envelope
+    ===================================================== */
+    .front-label {
+      text-align: center;
+      padding-top: 20px;
+      opacity: 1;
+      transition: opacity 0.5s ease 0.2s;
+    }
+    .front-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.5rem, 4.8vw, 1.9rem);
+      font-style: italic;
+      font-weight: 400;
+      color: #c8602a;
+      letter-spacing: 0.04em;
+      line-height: 1.2;
+    }
+    .front-date {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(0.9rem, 3vw, 1.05rem);
+      font-weight: 400;
+      color: var(--dark);
+      letter-spacing: 0.10em;
+      margin-top: 6px;
+    }
+    .card-wrapper.open ~ .front-label {
+      opacity: 0;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -582,6 +639,9 @@
     <!-- Double-door panels (overlay) -->
     <div class="doors">
 
+      <!-- "Click to view inside" prompt -->
+      <p class="click-hint">Click to view inside…</p>
+
       <!-- Left door -->
       <div class="door left" id="doorLeft">
         <div class="door-face">
@@ -649,7 +709,6 @@
             </g>
           </svg>
         </div>
-        <p class="door-hint">Open me</p>
       </div>
 
       <!-- Right door (mirror) -->
@@ -712,7 +771,6 @@
             </g>
           </svg>
         </div>
-        <p class="door-hint">Open me</p>
       </div>
 
       <!-- Wax seal sits between the two doors -->
@@ -751,6 +809,13 @@
     </div><!-- /.doors -->
 
   </div><!-- /.card-wrapper -->
+
+  <!-- Couple name & date shown on the envelope front, fades out on open -->
+  <div class="front-label">
+    <p class="front-name">Sebastian &amp; Hui&nbsp;Xin</p>
+    <p class="front-date">17 &amp; 18 October 2026</p>
+  </div>
+
 </div><!-- /.scene -->
 
 
@@ -758,7 +823,7 @@
   /* ============================================================
      Configuration — replace WEDDING_URL with the actual page
   ============================================================ */
-  const WEDDING_URL = 'https://example.com/wedding-details'; // ← update this URL
+  const WEDDING_URL = 'https://withjoy.com/sebastian-and-huixin';
 
   // Wire WEDDING_URL to the RSVP button
   document.getElementById('rsvpBtn').href = WEDDING_URL;
